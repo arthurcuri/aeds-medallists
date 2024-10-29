@@ -1,9 +1,11 @@
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.NoSuchElementException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -66,7 +68,7 @@ class Medalhista {
      */
     public int totalMedalhas() {
         return medalCount;
-    }   
+    }
 
     /**
      * Retorna um relatório das medalhas do atleta conforme o tipo solicitado pelo
@@ -79,20 +81,43 @@ class Medalhista {
      */
     public String relatorioDeMedalhas(TipoMedalha tipo) {
         StringBuilder relatorio = new StringBuilder();
-        boolean possuiMedalha = false;
-
         for (int i = 0; i < medalCount; i++) {
             if (medals[i].getTipo() == tipo) {
                 relatorio.append(medals[i].toString()).append("\n");
-                possuiMedalha = true;
+            }
+        }
+        if (relatorio.length() == 0) {
+            relatorio.append("Nao possui medalha de ").append(tipo).append("\n");
+        }
+        return relatorio.toString();
+    }
+
+    public String relatorioDeMedalhasSemParametro() {
+        StringBuilder relatorio = new StringBuilder();
+        int countOuro = 0;
+        int countPrata = 0;
+        int countBronze = 0;
+
+        for (int i = 0; i < medalCount; i++) {
+            if (medals[i].getTipo() == TipoMedalha.OURO) {
+                countOuro++;
+            } else if (medals[i].getTipo() == TipoMedalha.PRATA) {
+                countPrata++;
+            } else if (medals[i].getTipo() == TipoMedalha.BRONZE) {
+                countBronze++;
             }
         }
 
-        if (!possuiMedalha) {
-            return "Nao possui medalha de " + tipo;
+        if (countOuro > 0) {
+            relatorio.append("Quantidade de medalhas de ouro: ").append(countOuro).append("\n");
         }
-
-        return relatorio.toString().trim();
+        if (countPrata > 0) {
+            relatorio.append("Quantidade de medalhas de prata: ").append(countPrata).append("\n");
+        }
+        if (countBronze > 0) {
+            relatorio.append("Quantidade de medalhas de bronze: ").append(countBronze).append("\n");
+        }
+        return relatorio.toString();
     }
 
     /**
@@ -123,30 +148,20 @@ class Medalhista {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        return result;
-    }
-
-    @Override
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (obj == null || getClass() != obj.getClass())
             return false;
-        if (getClass() != obj.getClass())
-            return false;
-        Medalhista other = (Medalhista) obj;
-        if (name == null) {
-            if (other.name != null)
-                return false;
-        } else if (!name.equals(other.name))
-            return false;
-        return true;
+        Medalhista that = (Medalhista) obj;
+        return name.equals(that.name);
     }
-    
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+
     /**
      * Deve retornar os dados pessoais do medalhista, sem as medalhas, conforme
      * especificado no enunciado da atividade.
@@ -213,29 +228,30 @@ class Medalha {
 
 class Lista<E> {
 
-	private Celula<E> primeiro;
-	private Celula<E> ultimo;
+    private Celula<E> primeiro;
+    private Celula<E> ultimo;
     private int quantidade;
-	
-	Lista() {
-		Celula<E> sentinela = new Celula<E>();
-		primeiro = ultimo = sentinela;
-        quantidade = 0;
-	}
 
-    public boolean isEmpty(){
+    Lista() {
+        Celula<E> sentinela = new Celula<E>();
+        primeiro = ultimo = sentinela;
+        quantidade = 0;
+    }
+
+    public boolean isEmpty() {
         return (primeiro == ultimo);
     }
 
-    public void inserirInicio(E item){
-        Celula<E> novaCelula, antigaPrimeira;
-        antigaPrimeira = primeiro.getProximo();
-        novaCelula = new Celula<>(item, antigaPrimeira);
-        primeiro.setProximo(novaCelula);
-        quantidade++;
+    public void inserirInicio(E item) {
+        Celula<E> novaCelula = new Celula<>(item);
+        novaCelula.setProximo(this.primeiro.getProximo());
+        this.primeiro.setProximo(novaCelula);
+        if (isEmpty())
+            this.ultimo = novaCelula;
+        this.quantidade++;
     }
 
-    public void inserirFinal(E item){
+    public void inserirFinal(E item) {
         Celula<E> novaCelula;
         novaCelula = new Celula<>(item);
         ultimo.setProximo(novaCelula);
@@ -243,8 +259,8 @@ class Lista<E> {
         quantidade++;
     }
 
-    public E removerInicio(){
-        if(isEmpty()){
+    public E removerInicio() {
+        if (isEmpty()) {
             throw new IllegalStateException("A Lista está vazia.");
         }
         Celula<E> removida;
@@ -255,14 +271,14 @@ class Lista<E> {
         return removida.getItem();
     }
 
-    public E localizar(E procurado){
+    public E localizar(E procurado) {
         Celula<E> anterior;
-        if(isEmpty()){
+        if (isEmpty()) {
             throw new IllegalStateException("A Lista está vazia.");
         }
         anterior = primeiro.getProximo();
-        for(int i = 0; i < quantidade; i++){
-            if(anterior.getItem().equals(procurado)){
+        for (int i = 0; i < quantidade; i++) {
+            if (anterior.getItem().equals(procurado)) {
                 return anterior.getItem();
             }
             anterior = anterior.getProximo();
@@ -271,39 +287,27 @@ class Lista<E> {
     }
 
     @Override
-    public String toString(){
-        StringBuilder builder = new StringBuilder();
-        
-         if (primeiro == null || primeiro.getProximo() == null) {
-            return "[]";
-            }
-            
-        builder.append("[");
-        Celula<E> aux = primeiro.getProximo();
-
-        while(aux.getProximo() != null){
-            builder.append(aux.getItem() + ", ");
-            aux = aux.getProximo();
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        Celula<E> atual = this.primeiro.getProximo();
+        while (atual != null) {
+            sb.append(atual.getItem().toString()).append("\n");
+            atual = atual.getProximo();
         }
-        
-        builder.append(aux.getItem());
-        
-        builder.append("]");
-        
-        return builder.toString();
+        return sb.toString();
     }
 
-    public void inverter(){
+    public void inverter() {
         Lista<E> aux = new Lista<>();
         int tamanho = this.quantidade;
-        for(int i = 0; i < tamanho; i++){
+        for (int i = 0; i < tamanho; i++) {
             aux.inserirInicio(this.removerInicio());
         }
         this.primeiro = aux.primeiro;
         this.ultimo = aux.ultimo;
     }
 
-    public Lista<E> obterListaSemRepeticao(){
+    public Lista<E> obterListaSemRepeticao() {
         Lista<E> aux = new Lista<>();
         Celula<E> anterior;
         anterior = primeiro.getProximo();
@@ -322,102 +326,135 @@ class Lista<E> {
 
 class Celula<T> {
 
-	private final T item;
-	private Celula<T> proximo;
+    private final T item;
+    private Celula<T> proximo;
 
-	public Celula() {
-		this.item = null;
-		setProximo(null);
-	}
+    public Celula() {
+        this.item = null;
+        setProximo(null);
+    }
 
-	public Celula(T item) {
-		this.item = item;
-		setProximo(null);
-	}
+    public Celula(T item) {
+        this.item = item;
+        setProximo(null);
+    }
 
-	public Celula(T item, Celula<T> proximo) {
+    public Celula(T item, Celula<T> proximo) {
         this.item = item;
         this.proximo = proximo;
     }
-	
-	public T getItem() {
-		return item;
-	}
 
-	public Celula<T> getProximo() {
-		return proximo;
-	}
+    public T getItem() {
+        return item;
+    }
 
-	public void setProximo(Celula<T> proximo) {
-		this.proximo = proximo;
-	}
+    public Celula<T> getProximo() {
+        return proximo;
+    }
+
+    public void setProximo(Celula<T> proximo) {
+        this.proximo = proximo;
+    }
 }
 
 public class Aplicacao {
     public static void main(String[] args) {
-        String csvFile = "/tmp/medallists.csv";
+        Map<String, Medalhista> medalhistas = carregarMedalhistas("/tmp/medallists.csv");
+        Scanner leitura = new Scanner(System.in);
+        String entrada;
+    
+        Lista<Medalhista> medalhistasLista = new Lista<>();
+    
+        while (true) {
+            entrada = leitura.nextLine();
+    
+            if (entrada.equalsIgnoreCase("FIM")) {
+                break;
+            }
+    
+            String[] dadosEntrada = entrada.split(";");
+            String comando = dadosEntrada[0].trim();
+    
+            switch (comando.toUpperCase()) {
+                case "INSERIR INICIO":
+                    if (dadosEntrada.length > 1) {
+                        String nomeInicio = dadosEntrada[1].trim();
+                        Medalhista medalhistaInicio = medalhistas.get(nomeInicio);
+                        if (medalhistaInicio != null) {
+                            medalhistasLista.inserirInicio(medalhistaInicio);
+                        }
+                    }
+                    break;
+    
+                case "INSERIR FINAL":
+                    if (dadosEntrada.length > 1) {
+                        String nomeFinal = dadosEntrada[1].trim();
+                        Medalhista medalhistaFinal = medalhistas.get(nomeFinal);
+                        if (medalhistaFinal != null) {
+                            medalhistasLista.inserirFinal(medalhistaFinal);
+                        }
+                    }
+                    break;
+    
+                case "REMOVER INICIO":
+                    Medalhista medalhistaremovido = medalhistasLista.removerInicio();
+                    System.out.println("(REMOVIDO) " + medalhistaremovido + "\n"
+                            + medalhistaremovido.relatorioDeMedalhasSemParametro());
+                    break;
+    
+                case "SEM REPETICAO":
+                    System.out.println("LISTA DE MEDALHISTAS SEM REPETICAO");
+                    Lista<Medalhista> medalhistasSemRepeticao = medalhistasLista.obterListaSemRepeticao();
+                    System.out.println(medalhistasSemRepeticao);
+                    break;
+    
+                case "INVERTER":
+                    Lista<Medalhista> medalhistasInvertidos = medalhistasLista;
+                    System.out.println("LISTA INVERTIDA DE MEDALHISTAS");
+                    medalhistasInvertidos.inverter();
+                    System.out.println(medalhistasInvertidos);
+                    medalhistasLista = new Lista<>();
+                    break;
+    
+                default:
+                    break;
+            }
+        }
+        leitura.close();
+    }
+    
+    private static Map<String, Medalhista> carregarMedalhistas(String csvFile) {
+        Map<String, Medalhista> medalhistas = new HashMap<>();
         String line;
         String csvSplitBy = ",";
-    
-        Lista<Medalhista> listaOriginal = new Lista<>();
-        Lista<Medalhista> listaMedalhista = new Lista<>();
-        
     
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             br.readLine();
             while ((line = br.readLine()) != null) {
                 String[] dados = line.split(csvSplitBy);
-                String nome = dados[0]; 
-                String tipoMedalha = dados[1]; 
-                LocalDate dataMedalha = LocalDate.parse(dados[2]); 
-                String genero = dados[3]; 
-                LocalDate nascimento = LocalDate.parse(dados[4]); 
-                String pais = dados[5]; 
     
-                Medalhista medalhista = new Medalhista(nome, genero, nascimento, pais);
-                listaOriginal.inserirInicio(medalhista);
+                String nome = dados[0];
+                String genero = dados[3];
+                LocalDate nascimento = LocalDate.parse(dados[4]);
+                String pais = dados[5];
+    
+                TipoMedalha tipoMedalha = TipoMedalha.valueOf(dados[1]);
+                LocalDate dataMedalha = LocalDate.parse(dados[2]);
+                String disciplina = dados[6];
+                String evento = dados[7];
+    
+                Medalhista medalhista = medalhistas.getOrDefault(nome, new Medalhista(nome, genero, nascimento, pais));
+                Medalha medalha = new Medalha(tipoMedalha, dataMedalha, disciplina, evento);
+                medalhista.incluirMedalha(medalha);
+    
+                medalhistas.put(nome, medalhista);
             }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         } catch (IOException e) {
-            System.out.println("Erro ao ler o arquivo: " + e.getMessage());
+            e.printStackTrace();
         }
     
-        Scanner scanner = new Scanner(System.in);
-        String comando;
-    
-        while (true) {
-            comando = scanner.nextLine().trim();
-            String[] partesComando = comando.split("; ", 2);
-            String acao = partesComando[0];
-    
-            if (acao.equals("FIM")) {
-                break;
-            }
-    
-            switch (acao) {
-                case "INSERIR INICIO":
-                    listaOriginal.inserirInicio();
-                    break;
-    
-                case "INSERIR FINAL":
-                    
-                    break;
-    
-                case "REMOVER INICIO":
-                    
-                    break;
-
-                case "SEM REPETICAO":
-                    
-                    break;
-    
-                case "INVERTER":
-    
-                default:
-                    System.out.println("Comando inválido");
-            }
-        }
-    
-        scanner.close();
+        return medalhistas;
     }
-}
-
+}    
