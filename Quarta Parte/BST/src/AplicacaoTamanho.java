@@ -3,8 +3,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 /**
@@ -188,11 +186,9 @@ class Medalha {
     private String event;
 
     /** Cria uma medalha com os dados do parâmetro. Nenhum dado é validado */
-    public Medalha(TipoMedalha tipo, LocalDate data, String disciplina, String evento) {
+    public Medalha(TipoMedalha tipo, LocalDate data) {
         this.metalType = tipo;
         this.medalDate = data;
-        this.discipline = disciplina;
-        this.event = evento;
     }
 
     /**
@@ -465,9 +461,9 @@ class BST<E extends Comparable<E>> {
     }
 }
 
-public class Aplicacao {
+public class Aplicacao1 {
     public static void main(String[] args) {
-        BST<Medalhista> arvore = carregarMedalhistas("/tmp/medallists.csv");
+        BST<Medalhista> arvore = carregarMedalhistas("C:\\Users\\arthu\\OneDrive\\Desktop\\All\\my\\software_engineering\\Atividades\\3° Periodo - 2024\\AEDS II - Medallists\\Quarta Parte\\BST\\src\\tmp\\medallists.csv");
         Scanner leitura = new Scanner(System.in);
         String entrada;
 
@@ -499,15 +495,30 @@ public class Aplicacao {
     
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             br.readLine();
+            
             while ((line = br.readLine()) != null) {
                 String[] dados = line.split(csvSplitBy);
     
                 String nome = dados[0].trim();
+                String tipoMedalhaStr = dados[1].trim().toUpperCase();
+                LocalDate medalhaData = LocalDate.parse(dados[2].trim());
                 String genero = dados[3].trim();
                 LocalDate nascimento = LocalDate.parse(dados[4].trim());
                 String pais = dados[5].trim();
     
+                TipoMedalha tipoMedalha;
+                try {
+                    tipoMedalha = TipoMedalha.valueOf(tipoMedalhaStr);
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Tipo de medalha inválido: " + tipoMedalhaStr);
+                    continue; 
+                }
+    
                 Medalhista medalhista = new Medalhista(nome, genero, nascimento, pais);
+    
+                Medalha medalha = new Medalha(tipoMedalha, medalhaData);
+
+                medalhista.incluirMedalha(medalha);
     
                 if (medalhistas.localizar(medalhista) == null) {
                     medalhistas.add(medalhista);
@@ -516,7 +527,8 @@ public class Aplicacao {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        
         return medalhistas;
-    }    
+    }
 }
 
