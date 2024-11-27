@@ -46,7 +46,6 @@ class Medalhista implements Comparable<Medalhista> {
         this.medalCount = 0;
     }
 
-
     /**
      * Inclui uma medalha na coleção do medalhista. Retorna a quantidade atual de
      * medalhas do atleta.
@@ -170,7 +169,8 @@ class Medalhista implements Comparable<Medalhista> {
     @Override
     public String toString() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        return name + ", " + gender + ". Nascimento: " + birthDate.format(formatter) + ". Pais: " + country;
+        String dataNascimento = (this.birthDate != null) ? this.birthDate.format(formatter) : "Data de nascimento não disponível";
+        return name + ", " + gender + ". Nascimento: " + dataNascimento + ". Pais: " + country;
     }
 
     @Override
@@ -195,6 +195,11 @@ class Medalhista implements Comparable<Medalhista> {
             }
         }
         return count;
+    }
+
+
+    public Medalha[] getMedals() {
+        return medals;
     }
 }
 
@@ -231,6 +236,14 @@ class Medalha {
         return metalType;
     }
 
+    public LocalDate getDate() {
+        return medalDate;
+    }
+
+    public String getEvent() {
+        return event;
+    }
+
     /**
      * Retorna uma string com o "relatório" da medalha de acordo com o especificado
      * no enunciado do problema.
@@ -259,12 +272,29 @@ class Evento implements Comparable<Evento> {
     public Lista<Medalhista> recortarMedalhistas(String deOnde, String ateOnde) throws NullPointerException {
         Medalhista medalhistA = new Medalhista(deOnde, null, null, null);
         medalhistA = medalhistas.localizar(medalhistA);
-
+        
+        /*if (medalhistA == null) {
+            System.out.println("Medalhista " + deOnde + " não encontrado.");
+        }*/
+        
         Medalhista medalhistB = new Medalhista(ateOnde, null, null, null);
         medalhistB = medalhistas.localizar(medalhistB);
-
+        
+        /*if (medalhistB == null) {
+            System.out.println("Medalhista " + ateOnde + " não encontrado.");
+        }*/
+    
+        if (medalhistA == null || medalhistB == null) {
+            System.out.println("Nao ha medalhistas entre os indicados.");
+        }
+        
+        if(deOnde != null && ateOnde != null && medalhistA != null && medalhistB != null){
         return medalhistas.recortar(medalhistA, medalhistB);
+        }
+        return null;
     }
+    
+    
 
     public void incluirMedalhista(Medalhista medalhista) {
         medalhistas.add(medalhista);
@@ -278,6 +308,10 @@ class Evento implements Comparable<Evento> {
 
     public void relatorioMedalhistas() {
         medalhistas.caminhamentoEmOrdem();
+    }
+
+    public Lista<Medalhista> listaMedalhistas(){
+        return medalhistas.emOrdem();
     }
 
     @Override
@@ -480,7 +514,7 @@ class BST<E extends Comparable<E>> {
         return this.raiz == null;
     }
 
-    public E localizar(E item) {
+     public E localizar(E item) {
         return localizar(raiz, item);
     }
 
@@ -499,12 +533,14 @@ class BST<E extends Comparable<E>> {
         }
     }
 
-    /*o erro está na comparação de medalhistas...
-    public E localizar(E item) {
+    //
+    //
+    //DEBUG
+    /*public E localizar(E item) {
         return localizar(raiz, item);
     }
 
-    private E localizar(Node<E> raizArvore, E item) {
+    private E localizar(Node<E> raizArvore, E item) throws NullPointerException {
         if (raizArvore == null) {
             System.out.println("Item não encontrado: " + item);
             return null;
@@ -521,6 +557,9 @@ class BST<E extends Comparable<E>> {
             return localizar(raizArvore.getDireita(), item);
         }
     }*/
+    //
+    //
+    //DEBUG
 
     public void add(E item) {
         this.raiz = add(raiz, item);
@@ -615,7 +654,7 @@ class BST<E extends Comparable<E>> {
         return resultado;
     }
 
-    private void recortar(Node<E> atual, E deOnde, E ateOnde, Lista<E> resultado) {
+    private void recortar(Node<E> atual, E deOnde, E ateOnde, Lista<E> resultado) throws NullPointerException {
         if (atual == null)
             return;
 
@@ -633,8 +672,10 @@ class BST<E extends Comparable<E>> {
 
 public class Aplicacao {
     public static void main(String[] args) {
+        
         BST<Evento> arvoreEventos = carregarEventos("/tmp/medallists.csv");
         Scanner scanner = new Scanner(System.in);
+
 
         while (true) {
             String linha = scanner.nextLine().trim();
@@ -681,9 +722,28 @@ public class Aplicacao {
                     Evento encontrado = arvoreEventos.localizar(eventoImprimir);
 
                     if (encontrado != null) {
-                        System.out.println("Medalhistas " + esporte + " - " + evento);
-                        encontrado.relatorioMedalhistas();
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+                        System.out.println("Medalhistas " + esporte + " - " + evento);
+                        Lista<Medalhista> medallist = encontrado.listaMedalhistas();
+                        for (Medalhista medalhista : medallist) {
+                            if (medalhista != null) {
+                                String dataFormatada1 = medalhista.getNascimento().format(formatter);
+                                System.out.print(medalhista.getName() + ", " + medalhista.getGenero() + ". ");
+                                System.out.println("Nascimento: " + dataFormatada1+ ". Pais: " + medalhista.getPais() + ".");
+                                
+                                //provavelmente estou instanciando 2 medalhistas com mesmos atributos 
+                                //e as medalhas estao ficando em instancias diferentes.
+
+                                for (Medalha medalha : medalhista.getMedals()) {
+                                    if(medalha != null){
+                                    String dataFormatada2 = medalha.getDate().format(formatter);
+                                    System.out.println(medalha.getTipo() + " - " + encontrado.getDiscipline() + " - " + encontrado.getEvent() + " - " + dataFormatada2);
+                                    System.out.println();
+                                    }
+                                }
+                            }
+                        }
                     } else {
                         System.out.println("Evento nao encontrado.");
                     }
@@ -696,17 +756,22 @@ public class Aplicacao {
                         continue;
                     }
 
-                    String esporte = partes[1].trim();
-                    String evento = partes[2].trim();
-                    String medalhistaInicio = partes[3].trim();
-                    String medalhistaFim = partes[4].trim();
+                    String esporte = partes[2].trim();
+                    String evento = partes[1].trim();
+                    String medalhistaInicio = partes[3].trim().split("RECORTAR")[0].trim(); 
+                    String medalhistaFim = partes[4].trim().split("RECORTAR")[0].trim();  
 
                     Evento eventoRecortar = new Evento(esporte, evento);
                     Evento encontrado = arvoreEventos.localizar(eventoRecortar);
 
                     if (encontrado != null) {
                         System.out.println("Medalhistas entre " + medalhistaInicio + " e " + medalhistaFim + ":");
-                        encontrado.recortarMedalhistas(medalhistaInicio, medalhistaFim);
+                        Lista<Medalhista> encontrados = encontrado.recortarMedalhistas(medalhistaInicio, medalhistaFim);
+                        if(encontrados != null){
+                        for(Medalhista x : encontrados){
+                            System.out.println(x);
+                        }
+                        }
                     } else {
                         System.out.println("Evento não encontrado.");
                     }
@@ -719,17 +784,18 @@ public class Aplicacao {
         scanner.close();
     }
 
+    
     private static BST<Evento> carregarEventos(String csvFile) {
         BST<Evento> eventos = new BST<>();
         String line;
         String csvSplitBy = ",";
-
+    
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             br.readLine();
-
+    
             while ((line = br.readLine()) != null) {
                 String[] dados = line.split(csvSplitBy);
-
+    
                 String nome = dados[0].trim();
                 String tipoMedalhaStr = dados[1].trim().toUpperCase();
                 LocalDate medalhaData = LocalDate.parse(dados[2].trim());
@@ -738,7 +804,7 @@ public class Aplicacao {
                 String pais = dados[5].trim();
                 String disciplina = dados[6].trim();
                 String eventoNome = dados[7].trim();
-
+    
                 TipoMedalha tipoMedalha;
                 try {
                     tipoMedalha = TipoMedalha.valueOf(tipoMedalhaStr);
@@ -746,24 +812,72 @@ public class Aplicacao {
                     System.out.println("Tipo de medalha inválido: " + tipoMedalhaStr);
                     continue;
                 }
-
+    
                 Medalhista medalhista = new Medalhista(nome, genero, nascimento, pais);
                 Medalha medalha = new Medalha(tipoMedalha, medalhaData);
-                medalhista.incluirMedalha(medalha);
-
+                
+    
                 Evento evento = new Evento(eventoNome, disciplina);
                 Evento eventoExistente = eventos.localizar(evento);
-
+    
                 if (eventoExistente != null) {
-                    eventoExistente.incluirMedalhista(medalhista);
+                    boolean medalhistaExistente = false;
+                    for (Medalhista m : eventoExistente.listaMedalhistas()) {
+                        if (m != null && m.getName().equals(nome)) {
+                            m.incluirMedalha(medalha);
+                            medalhistaExistente = true;
+                            break;
+                        }
+                    }
+                    if (!medalhistaExistente) {
+                        eventoExistente.incluirMedalhista(medalhista);
+                        medalhista.incluirMedalha(medalha);
+                    }
                 } else {
                     evento.incluirMedalhista(medalhista);
+                    medalhista.incluirMedalha(medalha);
                     eventos.add(evento);
                 }
             }
+    
         } catch (IOException e) {
             e.printStackTrace();
         }
+                //
+                //
+                //DEBUG
+                /*
+                    Lista<Evento> eventox = eventos.emOrdem();
+
+                    for (Evento evento : eventox) {
+                        if (evento != null) {
+                            System.out.println("Evento: " + evento.getEvent() + " - " + evento.getDiscipline());
+                        
+                            BST<Medalhista> arvoreMedalhistas = evento.getArvoreMedalhistas();
+                            
+                            if (arvoreMedalhistas != null) {
+                                Lista<Medalhista> aM = arvoreMedalhistas.emOrdem();
+
+                                for (Medalhista medalhista : aM) {
+                                    if (medalhista != null) {
+                                        System.out.println("  " + medalhista.getName() + ", " + medalhista.getGenero() + ". Nascimento: "
+                                                + medalhista.getNascimento() + ". Pais: " + medalhista.getPais());
+
+                                        for (Medalha medalha : medalhista.getMedals()) {
+                                            if(medalha != null){
+                                            System.out.println("    Medalha: " + medalha.getTipo() + " - Data: " + medalha.getDate());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                 */               
+                //DEBUG
+                //
+                //
+
         return eventos;
     }
 }

@@ -359,7 +359,7 @@ class Celula<T> {
 
 public class Aplicacao {
     public static void main(String[] args) {
-        Map<String, Medalhista> medalhistas = carregarMedalhistas("/tmp/medallists.csv");
+        Map<String, Medalhista> medalhistas = carregarMedalhistas("C:\\Users\\arthu\\OneDrive\\Desktop\\All\\my\\software_engineering\\Atividades\\3° Periodo - 2024\\AEDS II - Medallists\\Quarta Parte\\BST\\src\\tmp\\medallists.csv");
         Scanner leitura = new Scanner(System.in);
         String entrada;
     
